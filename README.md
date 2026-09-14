@@ -1,2 +1,0 @@
-# JUEGO-ELECTRONICO-DE-REFLEJOS-AUTOMATICO-
-Proyecto Básico (Grupo 6) de Mecatrónica II/2026
