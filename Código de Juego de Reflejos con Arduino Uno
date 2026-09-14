@@ -1,0 +1,164 @@
+const int leds[] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+const int cantidadLEDs = 10;
+
+const int boton = 2;
+const int buzzer = 13;
+
+const int posicionRojo = 4;
+
+const int velocidad[] = {250, 150, 80};
+
+int nivel = 0;
+int posicion = 0;
+
+unsigned long tiempoAnterior = 0;
+int estadoAnteriorBoton = HIGH; 
+
+bool juegoIniciado = false;
+bool juegoGanado = false;
+int contadorPitidosVictoria = 0;
+
+void setup() {
+  for (int i = 0; i < cantidadLEDs; i++) {
+    pinMode(leds[i], OUTPUT);
+    digitalWrite(leds[i], LOW);
+  }
+
+  pinMode(buzzer, OUTPUT);
+  digitalWrite(buzzer, LOW);
+
+  pinMode(boton, INPUT_PULLUP);
+
+  delay(100);
+  estadoAnteriorBoton = digitalRead(boton);
+
+  juegoIniciado = false;
+  juegoGanado = false;
+}
+
+void loop() {
+  int estadoBoton = digitalRead(boton);
+
+  if (estadoBoton == LOW && estadoAnteriorBoton == HIGH) {
+    if (!juegoIniciado || juegoGanado) {
+      juegoGanado = false;
+      juegoIniciado = true;
+      nivel = 0;
+      posicion = 0;
+      contadorPitidosVictoria = 0;
+      
+      apagarTodosLEDs();
+      digitalWrite(buzzer, LOW);
+      digitalWrite(leds[posicion], HIGH);
+      tiempoAnterior = millis();
+    } 
+    else {
+      evaluarRespuesta();
+    }
+    
+    delay(250);
+  }
+
+  estadoAnteriorBoton = estadoBoton;
+
+  if (juegoIniciado && !juegoGanado) {
+    unsigned long tiempoActual = millis();
+
+    if (tiempoActual - tiempoAnterior >= velocidad[nivel]) {
+      digitalWrite(leds[posicion], LOW);
+
+      posicion++;
+      if (posicion >= cantidadLEDs) {
+        posicion = 0;
+      }
+
+      digitalWrite(leds[posicion], HIGH);
+      tiempoAnterior = tiempoActual;
+    }
+  }
+
+  if (juegoGanado) {
+    animacionVictoriaSincronizada();
+  }
+}
+
+void evaluarRespuesta() {
+  if (posicion == posicionRojo) {
+    digitalWrite(buzzer, HIGH);
+    delay(70);
+    digitalWrite(buzzer, LOW);
+    delay(70);
+    digitalWrite(buzzer, HIGH);
+    delay(70);
+    digitalWrite(buzzer, LOW);
+
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(leds[posicion], LOW);
+      delay(100);
+      digitalWrite(leds[posicion], HIGH);
+      delay(100);
+    }
+
+    nivel++;
+
+    if (nivel >= 3) {
+      juegoGanado = true;
+      contadorPitidosVictoria = 0;
+      return;
+    }
+
+    digitalWrite(leds[posicion], LOW);
+    posicion++;
+    if (posicion >= cantidadLEDs) {
+      posicion = 0;
+    }
+    digitalWrite(leds[posicion], HIGH);
+    tiempoAnterior = millis();
+  } 
+  else {
+    digitalWrite(buzzer, HIGH);
+    delay(400);
+    digitalWrite(buzzer, LOW);
+
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(leds[posicion], LOW);
+      delay(80);
+      digitalWrite(leds[posicion], HIGH);
+      delay(80);
+    }
+
+    nivel = 0;
+    apagarTodosLEDs();
+    posicion = 0;
+    digitalWrite(leds[posicion], HIGH);
+    tiempoAnterior = millis();
+  }
+}
+
+void apagarTodosLEDs() {
+  for (int i = 0; i < cantidadLEDs; i++) {
+    digitalWrite(leds[i], LOW);
+  }
+}
+
+void animacionVictoriaSincronizada() {
+  for (int i = 0; i < cantidadLEDs; i++) {
+    digitalWrite(leds[i], HIGH);
+  }
+  
+  digitalWrite(leds[posicionRojo], HIGH);
+
+  if (contadorPitidosVictoria < 3) {
+    digitalWrite(buzzer, HIGH);
+  } else {
+    digitalWrite(buzzer, LOW);
+  }
+  
+  delay(200);
+
+  apagarTodosLEDs();
+  digitalWrite(buzzer, LOW);
+  
+  contadorPitidosVictoria++;
+  delay(200);
+}
